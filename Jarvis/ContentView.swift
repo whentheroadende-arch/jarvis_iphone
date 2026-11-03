@@ -19,6 +19,7 @@ struct ContentView: View {
                         .scaleEffect(1 + CGFloat(min(a.livello * 6, 0.25)))
                         .animation(.easeOut(duration: 0.15), value: a.livello)
                     Text(a.stato).foregroundColor(.cyan).multilineTextAlignment(.center)
+                    if !a.batteria.isEmpty { Text("Batteria: \(a.batteria)").font(.footnote).foregroundColor(.white.opacity(0.6)) }
                     if !a.sentito.isEmpty { Text("Tu: \(a.sentito)").foregroundColor(.white.opacity(0.75)).frame(maxWidth: .infinity, alignment: .leading) }
                     if !a.risposta.isEmpty { Text("Jarvis: \(a.risposta)").foregroundColor(.white).frame(maxWidth: .infinity, alignment: .leading) }
                     Toggle("Ascolta sempre «Jarvis»", isOn: $sempre).tint(.cyan).foregroundColor(.white)
