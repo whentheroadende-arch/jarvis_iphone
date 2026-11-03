@@ -1,0 +1,32 @@
+# Costruisce l'app Jarvis per iPhone su un Mac di GitHub (gratis) e la pubblica come Release: un file .ipa non firmato,
+# che AltStore/AltServer firma con l'Apple ID del telefono quando la installa.
+name: build
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  ios:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: XcodeGen
+        run: brew install xcodegen && xcodegen generate
+      - name: Compila
+        run: |
+          xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -configuration Release -sdk iphoneos \
+            -destination 'generic/platform=iOS' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+      - name: Impacchetta
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/Jarvis.app Payload/
+          zip -qry Jarvis.ipa Payload
+      - name: Pubblica
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Jarvis ${{ github.run_number }}
+          files: Jarvis.ipa

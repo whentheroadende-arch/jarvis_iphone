@@ -1,0 +1,6 @@
+build/
+Payload/
+*.ipa
+*.xcodeproj/
+Jarvis/Info.plist
+.DS_Store
