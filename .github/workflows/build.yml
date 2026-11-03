@@ -1,5 +1,6 @@
 # Costruisce l'app Jarvis per iPhone su un Mac di GitHub (gratis) e la pubblica come Release: un file .ipa non firmato,
-# che AltStore/AltServer firma con l'Apple ID del telefono quando la installa.
+# che AltStore/AltServer firma con l'Apple ID del telefono quando la installa. Se la compilazione fallisce, il registro
+# della build va in una Release "errore-N", cosi' si legge anche senza accedere all'account.
 name: build
 on:
   push:
@@ -13,12 +14,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: XcodeGen
-        run: brew install xcodegen && xcodegen generate
+        run: brew install xcodegen && xcodegen generate 2>&1 | tee build.log
       - name: Compila
         run: |
+          set -o pipefail
           xcodebuild -project Jarvis.xcodeproj -scheme Jarvis -configuration Release -sdk iphoneos \
             -destination 'generic/platform=iOS' -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build 2>&1 | tee -a build.log
       - name: Impacchetta
         run: |
           mkdir -p Payload
@@ -30,3 +32,15 @@ jobs:
           tag_name: build-${{ github.run_number }}
           name: Jarvis ${{ github.run_number }}
           files: Jarvis.ipa
+      - name: Errori della build
+        if: failure()
+        run: grep -E "error:|warning: .*deprecated|BUILD FAILED" build.log | head -80 > errori.txt || true
+      - name: Pubblica gli errori
+        if: failure()
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: errore-${{ github.run_number }}
+          name: Errore build ${{ github.run_number }}
+          files: |
+            errori.txt
+            build.log
