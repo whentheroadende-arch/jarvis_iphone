@@ -34,7 +34,8 @@ jobs:
           files: Jarvis.ipa
       - name: Errori della build
         if: failure()
-        run: grep -E "error:|warning: .*deprecated|BUILD FAILED" build.log | head -80 > errori.txt || true
+        run: |
+          grep -E "error:|warning: .*deprecated|BUILD FAILED" build.log | head -80 > errori.txt || true
       - name: Pubblica gli errori
         if: failure()
         uses: softprops/action-gh-release@v2
